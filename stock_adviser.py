@@ -6,13 +6,11 @@ from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 
-# Function to fetch stock data
 def fetch_stock_data(symbol, start_date, end_date):
     stock = yf.Ticker(symbol)
     data = stock.history(start=start_date, end=end_date)
     return data, stock
 
-# Function to prepare data for prediction
 def prepare_data(df):
     df = df[['Close']].copy()
     df['Prediction'] = df['Close'].shift(-1)
@@ -22,13 +20,10 @@ def prepare_data(df):
     y = np.array(df['Prediction'])
     return X, y
 
-# Function to get fundamentals and analyze stock
 def analyze_stock(symbol, exchange):
-    # Define date range (last 60 days for training)
     end_date = datetime.now()
     start_date = end_date - timedelta(days=60)
 
-    # Fetch data and stock object
     print(f"\nFetching data for {symbol} ({exchange})...")
     data, stock = fetch_stock_data(symbol, start_date, end_date)
 
@@ -36,24 +31,18 @@ def analyze_stock(symbol, exchange):
         print(f"No data available for {symbol} on {exchange}")
         return None, None, None, None
 
-    # Prepare data for prediction
     X, y = prepare_data(data)
 
-    # Split data into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    # Train a simple Linear Regression model
     model = LinearRegression()
     model.fit(X_train, y_train)
 
-    # Evaluate model
     score = model.score(X_test, y_test)
 
-    # Predict the next day's price
     last_price = np.array([data['Close'][-1]]).reshape(-1, 1)
     predicted_price = model.predict(last_price)[0]
 
-    # Fetch fundamentals
     fundamentals = stock.info
     pe_ratio = fundamentals.get('trailingPE', None)
     eps = fundamentals.get('trailingEps', None)
@@ -61,7 +50,6 @@ def analyze_stock(symbol, exchange):
     debt_to_equity = fundamentals.get('debtToEquity', None)
     market_cap = fundamentals.get('marketCap', None)
 
-    # Display fundamentals
     print(f"\nFundamentals for {symbol} ({exchange}):")
     print(f"P/E Ratio: {pe_ratio if pe_ratio else 'N/A'}")
     print(f"Earnings Per Share (EPS): {eps if eps else 'N/A'}")
@@ -71,12 +59,10 @@ def analyze_stock(symbol, exchange):
     print(f"Predicted next day price: ₹{predicted_price:.2f}")
     print(f"Model accuracy (R² score): {score:.4f}")
 
-    # Decision logic for "good to buy"
     recommendation = "Neutral"
     reasons = []
 
-    # Fundamental checks
-    if pe_ratio and pe_ratio < 20:  # Low P/E might indicate undervaluation
+    if pe_ratio and pe_ratio < 20: 
         reasons.append("Low P/E ratio (potentially undervalued)")
     elif pe_ratio and pe_ratio > 30:
         reasons.append("High P/E ratio (potentially overvalued)")
@@ -94,13 +80,11 @@ def analyze_stock(symbol, exchange):
     elif debt_to_equity and debt_to_equity > 2:
         reasons.append("High debt-to-equity (risky finances)")
 
-    # Technical check
     if predicted_price > last_price[0][0]:
         reasons.append("Upward price trend predicted")
     else:
         reasons.append("Downward or flat price trend predicted")
 
-    # Simple recommendation logic
     positive_factors = sum(1 for r in reasons if "Low P/E" in r or "Positive EPS" in r or "Pays dividends" in r or "Low debt" in r or "Upward" in r)
     negative_factors = len(reasons) - positive_factors
 
@@ -116,22 +100,17 @@ def analyze_stock(symbol, exchange):
 
     return data, predicted_price, score, recommendation
 
-# Main function to handle input and display analysis
 def predict_stock():
     # Get stock name from user
     stock_name = input("Enter the stock name (e.g., RELIANCE, TCS, TATAMOTORS): ").upper()
 
-    # Define symbols for NSE and BSE
     nse_symbol = f"{stock_name}.NS"
     bse_symbol = f"{stock_name}.BO"
 
-    # Analyze for NSE
     nse_data, nse_predicted, nse_score, nse_recommendation = analyze_stock(nse_symbol, "NSE")
 
-    # Analyze for BSE
     bse_data, bse_predicted, bse_score, bse_recommendation = analyze_stock(bse_symbol, "BSE")
 
-    # Plotting (if data exists)
     plt.figure(figsize=(12, 6))
 
     if nse_data is not None:
@@ -153,7 +132,5 @@ def predict_stock():
         plt.show()
     else:
         print("No valid data to plot.")
-
-# Run the program
 if __name__ == "__main__":
     predict_stock()
