@@ -1,2 +1,5 @@
 # Stock_Adviser
- fetches stock data from Yahoo Finance, analyzes fundamental indicators (P/E ratio, EPS, debt-to-equity, dividend yield), and predicts the next day's stock price using a linear regression model. It evaluates whether the stock is a "Good to Buy" based on fundamental and technical factors.
+# Stock Price Prediction Tool
+A Python-based tool to predict stock prices for NSE/BSE companies using yfinance and Linear Regression.
+- Features: Price prediction, fundamental analysis (P/E, EPS), buy/sell recommendations.
+- Tools: Python, yfinance, pandas, scikit-learn, matplotlib.
