@@ -3,14 +3,15 @@ import pandas as pd
 import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
-import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 
+# Function to fetch stock data
 def fetch_stock_data(symbol, start_date, end_date):
     stock = yf.Ticker(symbol)
     data = stock.history(start=start_date, end=end_date)
     return data, stock
 
+# Function to prepare data for prediction
 def prepare_data(df):
     df = df[['Close']].copy()
     df['Prediction'] = df['Close'].shift(-1)
@@ -20,6 +21,7 @@ def prepare_data(df):
     y = np.array(df['Prediction'])
     return X, y
 
+# Function to get fundamentals and analyze stock
 def analyze_stock(symbol, exchange):
     end_date = datetime.now()
     start_date = end_date - timedelta(days=60)
@@ -32,14 +34,12 @@ def analyze_stock(symbol, exchange):
         return None, None, None, None
 
     X, y = prepare_data(data)
-
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
     model = LinearRegression()
     model.fit(X_train, y_train)
-
+    
     score = model.score(X_test, y_test)
-
     last_price = np.array([data['Close'][-1]]).reshape(-1, 1)
     predicted_price = model.predict(last_price)[0]
 
@@ -62,7 +62,7 @@ def analyze_stock(symbol, exchange):
     recommendation = "Neutral"
     reasons = []
 
-    if pe_ratio and pe_ratio < 20: 
+    if pe_ratio and pe_ratio < 20:
         reasons.append("Low P/E ratio (potentially undervalued)")
     elif pe_ratio and pe_ratio > 30:
         reasons.append("High P/E ratio (potentially overvalued)")
@@ -100,37 +100,15 @@ def analyze_stock(symbol, exchange):
 
     return data, predicted_price, score, recommendation
 
+# Main function to handle input and display analysis
 def predict_stock():
-    # Get stock name from user
     stock_name = input("Enter the stock name (e.g., RELIANCE, TCS, TATAMOTORS): ").upper()
 
     nse_symbol = f"{stock_name}.NS"
     bse_symbol = f"{stock_name}.BO"
 
-    nse_data, nse_predicted, nse_score, nse_recommendation = analyze_stock(nse_symbol, "NSE")
+    analyze_stock(nse_symbol, "NSE")
+    analyze_stock(bse_symbol, "BSE")
 
-    bse_data, bse_predicted, bse_score, bse_recommendation = analyze_stock(bse_symbol, "BSE")
-
-    plt.figure(figsize=(12, 6))
-
-    if nse_data is not None:
-        plt.plot(nse_data.index, nse_data['Close'], label=f'{nse_symbol} Historical Price', color='blue')
-        plt.axhline(y=nse_predicted, color='blue', linestyle='--', 
-                    label=f'{nse_symbol} Predicted: ₹{nse_predicted:.2f} ({nse_recommendation})')
-
-    if bse_data is not None:
-        plt.plot(bse_data.index, bse_data['Close'], label=f'{bse_symbol} Historical Price', color='green')
-        plt.axhline(y=bse_predicted, color='green', linestyle='--', 
-                    label=f'{bse_symbol} Predicted: ₹{bse_predicted:.2f} ({bse_recommendation})')
-
-    if nse_data is not None or bse_data is not None:
-        plt.title(f"Stock Price Prediction for {stock_name} (NSE & BSE)")
-        plt.xlabel("Date")
-        plt.ylabel("Price (₹)")
-        plt.legend()
-        plt.grid(True)
-        plt.show()
-    else:
-        print("No valid data to plot.")
 if __name__ == "__main__":
     predict_stock()
